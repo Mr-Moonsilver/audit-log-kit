@@ -18,5 +18,6 @@ export function setupAuditLog(app: Express, config: AuditConfig): SetupAuditLogR
 
 export { AuditLogger } from './logger.js';
 export { SqliteAuditDB } from './db/sqlite.js';
+export { PostgresAuditDB } from './db/postgres.js';
 export type { AuditDB } from './db/interface.js';
 export type { AuditConfig, AuditEntry, AuditQueryOptions, AuditQueryResult, SetupAuditLogResult } from './types.js';
