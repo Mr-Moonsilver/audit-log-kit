@@ -4,9 +4,9 @@ import type { AuditDB } from './db/interface.js';
 export class AuditLogger {
   constructor(private db: AuditDB) {}
 
-  log(userId: number | null, action: string, resourceType: string, resourceId?: string | null, details?: any): void {
+  log(userId: number | null, action: string, resourceType: string, resourceId?: string | null, details?: any) {
     const detailsStr = details ? (typeof details === 'string' ? details : JSON.stringify(details)) : null;
-    this.db.log(userId, action, resourceType, resourceId ?? null, detailsStr);
+    return this.db.log(userId, action, resourceType, resourceId ?? null, detailsStr);
   }
 
   createAutoLogMiddleware() {

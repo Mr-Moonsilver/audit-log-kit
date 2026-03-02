@@ -4,10 +4,10 @@ import type { AuditDB } from './db/interface.js';
 export function createAuditRouter(db: AuditDB): Router {
   const router = Router();
 
-  router.get('/', (req: any, res: Response) => {
+  router.get('/', async (req: any, res: Response) => {
     const { user_id, action, resource_type, date_start, date_end, search, page, limit } = req.query;
 
-    const result = db.query({
+    const result = await db.query({
       userId: user_id ? Number(user_id) : undefined,
       action: action as string | undefined,
       resourceType: resource_type as string | undefined,
