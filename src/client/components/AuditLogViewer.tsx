@@ -4,6 +4,67 @@ import type { AuditEntry } from '../types.js';
 
 const ACTION_OPTIONS = ['', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
+/**
+ * All user-facing strings of the viewer. Override any subset via the `labels`
+ * prop (e.g. for i18n). Templates use `{n}` / `{page}` / `{pages}` placeholders.
+ */
+export interface AuditLogViewerLabels {
+  allActions: string;
+  resourceTypePlaceholder: string;
+  startDateTitle: string;
+  endDateTitle: string;
+  searchPlaceholder: string;
+  searchButton: string;
+  clearButton: string;
+  colTime: string;
+  colUser: string;
+  colAction: string;
+  colResourceType: string;
+  colResourceId: string;
+  colDetails: string;
+  colIp: string;
+  loading: string;
+  empty: string;
+  loadFailed: string;
+  clickToExpand: string;
+  /** `{n}` → total entry count */
+  totalEntries: string;
+  /** `{page}` / `{pages}` → current page / page count */
+  pageOf: string;
+  previous: string;
+  next: string;
+}
+
+export const defaultAuditLogViewerLabels: AuditLogViewerLabels = {
+  allActions: 'All Actions',
+  resourceTypePlaceholder: 'Resource type',
+  startDateTitle: 'Start date',
+  endDateTitle: 'End date',
+  searchPlaceholder: 'Search...',
+  searchButton: 'Search',
+  clearButton: 'Clear',
+  colTime: 'Time',
+  colUser: 'User',
+  colAction: 'Action',
+  colResourceType: 'Resource Type',
+  colResourceId: 'Resource ID',
+  colDetails: 'Details',
+  colIp: 'IP',
+  loading: 'Loading...',
+  empty: 'No audit log entries found',
+  loadFailed: 'Failed to load audit log',
+  clickToExpand: 'Click to expand',
+  totalEntries: '{n} total entries',
+  pageOf: 'Page {page} of {pages}',
+  previous: 'Previous',
+  next: 'Next',
+};
+
+export interface AuditLogViewerProps {
+  /** Override any user-facing string (e.g. for i18n). */
+  labels?: Partial<AuditLogViewerLabels>;
+}
+
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleString();
@@ -26,7 +87,8 @@ function ActionBadge({ action }: { action: string }) {
   return <span className={`badge ${cls}`}>{action}</span>;
 }
 
-export function AuditLogViewer() {
+export function AuditLogViewer({ labels }: AuditLogViewerProps = {}) {
+  const L: AuditLogViewerLabels = { ...defaultAuditLogViewerLabels, ...labels };
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -57,7 +119,7 @@ export function AuditLogViewer() {
       setTotal(result.total);
       setPage(result.page);
     } catch (err: any) {
-      setError(err.message || 'Failed to load audit log');
+      setError(err.message || L.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -65,6 +127,7 @@ export function AuditLogViewer() {
 
   useEffect(() => {
     loadEntries(appliedFilters, page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, page]);
 
   function handleSearch() {
@@ -101,7 +164,7 @@ export function AuditLogViewer() {
           onChange={e => setAction(e.target.value)}
           style={{ width: 'auto' }}
         >
-          <option value="">All Actions</option>
+          <option value="">{L.allActions}</option>
           {ACTION_OPTIONS.filter(Boolean).map(a => (
             <option key={a} value={a}>{a}</option>
           ))}
@@ -110,7 +173,7 @@ export function AuditLogViewer() {
         <input
           className="form-input"
           type="text"
-          placeholder="Resource type"
+          placeholder={L.resourceTypePlaceholder}
           value={resourceType}
           onChange={e => setResourceType(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -122,7 +185,7 @@ export function AuditLogViewer() {
           type="date"
           value={dateStart}
           onChange={e => setDateStart(e.target.value)}
-          title="Start date"
+          title={L.startDateTitle}
         />
 
         <input
@@ -130,21 +193,21 @@ export function AuditLogViewer() {
           type="date"
           value={dateEnd}
           onChange={e => setDateEnd(e.target.value)}
-          title="End date"
+          title={L.endDateTitle}
         />
 
         <input
           className="form-input"
           type="text"
-          placeholder="Search..."
+          placeholder={L.searchPlaceholder}
           value={search}
           onChange={e => setSearch(e.target.value)}
           onKeyDown={handleKeyDown}
           style={{ width: '160px' }}
         />
 
-        <button className="btn btn-primary btn-sm" onClick={handleSearch}>Search</button>
-        <button className="btn btn-secondary btn-sm" onClick={handleClear}>Clear</button>
+        <button className="btn btn-primary btn-sm" onClick={handleSearch}>{L.searchButton}</button>
+        <button className="btn btn-secondary btn-sm" onClick={handleClear}>{L.clearButton}</button>
       </div>
 
       {error && <div className="text-sm" style={{ color: 'var(--color-danger, red)', marginBottom: '8px' }}>{error}</div>}
@@ -153,20 +216,20 @@ export function AuditLogViewer() {
         <table className="table">
           <thead>
             <tr>
-              <th>Time</th>
-              <th>User</th>
-              <th>Action</th>
-              <th>Resource Type</th>
-              <th>Resource ID</th>
-              <th>Details</th>
-              <th>IP</th>
+              <th>{L.colTime}</th>
+              <th>{L.colUser}</th>
+              <th>{L.colAction}</th>
+              <th>{L.colResourceType}</th>
+              <th>{L.colResourceId}</th>
+              <th>{L.colDetails}</th>
+              <th>{L.colIp}</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="text-sm text-muted" style={{ textAlign: 'center', padding: '24px' }}>Loading...</td></tr>
+              <tr><td colSpan={7} className="text-sm text-muted" style={{ textAlign: 'center', padding: '24px' }}>{L.loading}</td></tr>
             ) : entries.length === 0 ? (
-              <tr><td colSpan={7} className="text-sm text-muted" style={{ textAlign: 'center', padding: '24px' }}>No audit log entries found</td></tr>
+              <tr><td colSpan={7} className="text-sm text-muted" style={{ textAlign: 'center', padding: '24px' }}>{L.empty}</td></tr>
             ) : (
               entries.map(entry => (
                 <tr key={entry.id}>
@@ -181,7 +244,7 @@ export function AuditLogViewer() {
                         className="btn-ghost"
                         style={{ cursor: 'pointer' }}
                         onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
-                        title="Click to expand"
+                        title={L.clickToExpand}
                       >
                         {expandedId === entry.id ? entry.details : truncate(entry.details, 80)}
                       </span>
@@ -199,22 +262,22 @@ export function AuditLogViewer() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between" style={{ marginTop: '12px' }}>
-          <span className="text-sm text-muted">{total} total entries</span>
+          <span className="text-sm text-muted">{L.totalEntries.replace('{n}', String(total))}</span>
           <div className="flex gap-sm items-center">
             <button
               className="btn btn-secondary btn-sm"
               disabled={page <= 1}
               onClick={() => setPage(p => Math.max(1, p - 1))}
             >
-              Previous
+              {L.previous}
             </button>
-            <span className="text-sm">Page {page} of {totalPages}</span>
+            <span className="text-sm">{L.pageOf.replace('{page}', String(page)).replace('{pages}', String(totalPages))}</span>
             <button
               className="btn btn-secondary btn-sm"
               disabled={page >= totalPages}
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             >
-              Next
+              {L.next}
             </button>
           </div>
         </div>
