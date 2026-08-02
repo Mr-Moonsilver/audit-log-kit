@@ -14,6 +14,18 @@ function truncate(str: string | null, max: number): string {
   return str.length > max ? str.slice(0, max) + '...' : str;
 }
 
+/** `details` is TEXT on SQLite but JSONB on Postgres, where the driver returns a parsed
+ *  object. Rendering that object as a React child throws, so always coerce to a string. */
+function detailsText(details: unknown): string {
+  if (details == null) return '';
+  if (typeof details === 'string') return details;
+  try {
+    return JSON.stringify(details);
+  } catch {
+    return String(details);
+  }
+}
+
 function ActionBadge({ action }: { action: string }) {
   const colorMap: Record<string, string> = {
     GET: 'badge-info',
@@ -183,7 +195,7 @@ export function AuditLogViewer() {
                         onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
                         title="Click to expand"
                       >
-                        {expandedId === entry.id ? entry.details : truncate(entry.details, 80)}
+                        {expandedId === entry.id ? detailsText(entry.details) : truncate(detailsText(entry.details), 80)}
                       </span>
                     ) : (
                       <span className="text-muted">-</span>
